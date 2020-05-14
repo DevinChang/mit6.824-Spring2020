@@ -1,6 +1,9 @@
 package mapreduce
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 //
 // schedule() starts and waits for all tasks in the given phase (mapPhase
@@ -30,5 +33,40 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 	//
 	// Your code here (Part III, Part IV).
 	//
+	// 每个worker有n个task
+	var wg sync.WaitGroup // waitGroup等待go routine的集合完成
+	for i := 0; i < ntasks; i++ {
+		// 递增waitgroup计数器
+		wg.Add(1)
+		// 启动go routine
+		// 每个worker需要调用call rpc来完成
+		dotaskarg := DoTaskArgs{
+			JobName:       jobName,
+			File:          mapFiles[i],
+			Phase:         phase,
+			TaskNumber:    i,
+			NumOtherPhase: n_other}
+
+		go func() {
+			defer wg.Done()
+			// 用死循环来表示当一个worker崩溃时，用另一个worker来工作
+			for {
+				worker := <-registerChan
+				// 如果调用成功，就将worker返还
+				if call(worker, "Worker.DoTask", &dotaskarg, nil) == true {
+					// 注意！！！！ 要完成之后将worker返回
+					go func() {
+						registerChan <- worker
+					}()
+					// worker执行成功后跳出死循环
+					break
+				}
+			}
+		}()
+
+	}
+	// 等待所有worker
+	wg.Wait()
+
 	fmt.Printf("Schedule: %v done\n", phase)
 }
