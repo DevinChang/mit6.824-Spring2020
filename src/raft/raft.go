@@ -36,6 +36,9 @@ import "labrpc"
 // snapshots) on the applyCh; at that point you can add fields to
 // ApplyMsg, but set CommandValid to false for these other uses.
 //
+
+// read
+
 type ApplyMsg struct {
 	CommandValid bool
 	Command      interface{}
