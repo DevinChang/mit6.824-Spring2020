@@ -134,6 +134,10 @@ func (rf *Raft) readPersist(data []byte) {
 //
 type RequestVoteArgs struct {
 	// Your data here (2A, 2B).
+	term         int
+	candidateID  int
+	lastLogIndex int
+	lastLongTerm int
 }
 
 //
@@ -142,6 +146,8 @@ type RequestVoteArgs struct {
 //
 type RequestVoteReply struct {
 	// Your data here (2A).
+	term        int
+	voteGranted bool
 }
 
 //
@@ -149,6 +155,13 @@ type RequestVoteReply struct {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
+	if arg.term < rf.currentTerm {
+		reply.term = rf.currentTerm
+		voteGranted = false
+	}
+	if rf.votedFor == nil || votedFor == arg.candidateID {
+
+	}
 }
 
 //
