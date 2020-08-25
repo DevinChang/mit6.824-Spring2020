@@ -160,7 +160,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		voteGranted = false
 	}
 	if rf.votedFor == nil || votedFor == arg.candidateID {
-
+		// vote
 	}
 }
 
@@ -251,6 +251,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.me = me
 
 	// Your initialization code here (2A, 2B, 2C).
+	// go func() ? or chan
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
