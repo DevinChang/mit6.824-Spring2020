@@ -20,6 +20,7 @@ package raft
 import (
 	"labrpc"
 	"sync"
+	"time"
 )
 
 // import "bytes"
@@ -75,6 +76,8 @@ type Raft struct {
 	matchIndex []int
 	//
 	state string // server state
+	// election timeout
+	electionTimer time.Time
 }
 
 // return currentTerm and whether this server
@@ -232,6 +235,10 @@ func (rf *Raft) Kill() {
 	// Your code here, if desired.
 }
 
+func (rf *Raft) ChangeRole() {
+
+}
+
 //
 // the service or tester wants to create a Raft server. the ports
 // of all the Raft servers (including this one) are in peers[]. this
@@ -251,7 +258,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.me = me
 
 	// Your initialization code here (2A, 2B, 2C).
-	// go func() ? or chan
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
