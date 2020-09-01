@@ -19,6 +19,7 @@ package raft
 
 import (
 	"labrpc"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -39,9 +40,9 @@ import (
 //
 
 const (
-	Leader    = "leader"
-	Candidate = "candidate"
-	Follower  = "follower"
+	Leader    = 1
+	Candidate = 2
+	Follower  = 3
 )
 
 // read
@@ -75,16 +76,16 @@ type Raft struct {
 	nextIndex  []int
 	matchIndex []int
 	//
-	state string // server state
+	state int // server state
+	randTime   *rand.Rand
 	// election timeout
-	electionTimer time.Time
+	electionTimer time.Timer
 }
 
 // return currentTerm and whether this server
 // believes it is the leader.
 func (rf *Raft) GetState() (int, bool) {
-
-	var term int
+	//var term int
 	var isleader bool
 	// Your code here (2A).
 	if rf.state == Leader {
@@ -153,16 +154,53 @@ type RequestVoteReply struct {
 	voteGranted bool
 }
 
+func (rf *Raft) ResetTimeout() {
+	randtime := rf.randTime.Intn(250) // interval
+	duration := time.Duration(randtime) * time.Millisecond
+	rf.electionTimer.Reset(duration)
+}
+
+func (rf *Raft) getStatus() (int){
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	return rf.state
+}
+
+func (rf *Raft) Vote() {
+	rf.mu.Lock()
+	rf.currentTerm++
+	rf.mu.Unlock()
+	// vote for self?
+
+	// send RequestVote RPCs to all servers
+}
+
+func (rf *Raft) Election() {
+	rf.ResetTimeout()
+	defer rf.electionTimer.Stop()
+	for true {
+		// change role
+		<-rf.electionTimer.C
+		if rf.getStatus() == Candidate {
+			rf.ResetTimeout() // reset election timer
+
+		} else if rf.getStatus() == Follower {
+
+		}
+			
+	}
+}
+
 //
 // example RequestVote RPC handler.
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	if arg.term < rf.currentTerm {
+	if args.term < rf.currentTerm {
 		reply.term = rf.currentTerm
-		voteGranted = false
+		reply.voteGranted = false
 	}
-	if rf.votedFor == nil || votedFor == arg.candidateID {
+	if rf.votedFor == -1 || rf.votedFor == args.candidateID {
 		// vote
 	}
 }
@@ -235,9 +273,10 @@ func (rf *Raft) Kill() {
 	// Your code here, if desired.
 }
 
-func (rf *Raft) ChangeRole() {
 
-}
+
+
+
 
 //
 // the service or tester wants to create a Raft server. the ports
