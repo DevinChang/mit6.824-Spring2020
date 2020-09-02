@@ -171,8 +171,28 @@ func (rf *Raft) Vote() {
 	rf.currentTerm++
 	rf.mu.Unlock()
 	// vote for self?
-
+	currentTerm, _ := rf.GetState()
+	arg := RequestVoteArgs{
+		term : currentTerm,
+		candidateID: rf.me,
+	}
 	// send RequestVote RPCs to all servers
+	var wait sync.WaitGroup
+	srvlen := len(rf.peers)
+	wait.Add(srvlen)
+	for i := 0; i < srvlen; i++ {
+		go func(idx int) {
+			defer wait.Done()
+		}
+	}
+}
+
+func (rf *Raft) setStatus() {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if rf.state == Follower {
+		rf.state = Candidate
+	}
 }
 
 func (rf *Raft) Election() {
@@ -183,9 +203,11 @@ func (rf *Raft) Election() {
 		<-rf.electionTimer.C
 		if rf.getStatus() == Candidate {
 			rf.ResetTimeout() // reset election timer
-
+			rf.Vote()
 		} else if rf.getStatus() == Follower {
-
+			rf.ResetTimeout() // reset election timer
+			rf.setStatus()
+			rf.Vote()
 		}
 			
 	}
