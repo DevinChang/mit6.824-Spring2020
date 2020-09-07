@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = http://git.bilibili.co/bdjs/bdjs-go-library.git
+	fetch = +refs/heads/*:refs/remotes/origin/*

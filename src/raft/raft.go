@@ -177,22 +177,50 @@ func (rf *Raft) Vote() {
 		candidateID: rf.me,
 	}
 	// send RequestVote RPCs to all servers
-	var wait sync.WaitGroup
+	var (
+		wait sync.WaitGroup
+		agreeVoted int
+		term int
+	)
 	srvlen := len(rf.peers)
 	wait.Add(srvlen)
+	term = currentTerm
 	for i := 0; i < srvlen; i++ {
 		go func(idx int) {
 			defer wait.Done()
+			reply := RequestVoteReply{
+				term: -1,
+				voteGranted: false,
+			}
+			if !rf.sendRequestVote(i, &arg, &reply) {
+				DPrintf("sendRequestVote error")
+			}
+			if reply.voteGranted {
+				agreeVoted++
+				return
+			}
+			if term < reply.term {
+				term = reply.term
+			}
+		}(i)
+		wait.Wait()
+		// judge status
+		if term > currentTerm {
+			rf.mu.Lock()
+			rf.currentTerm = term
+			rf.mu.Unlock()
+			rf.setStatus(Follower)
+		}
+		if agreeVoted * 2 > srvlen {
+			rf.setStatus(Leader)
 		}
 	}
 }
 
-func (rf *Raft) setStatus() {
+func (rf *Raft) setStatus(state int) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	if rf.state == Follower {
-		rf.state = Candidate
-	}
+	rf.state = state
 }
 
 func (rf *Raft) Election() {
@@ -206,7 +234,7 @@ func (rf *Raft) Election() {
 			rf.Vote()
 		} else if rf.getStatus() == Follower {
 			rf.ResetTimeout() // reset election timer
-			rf.setStatus()
+			rf.setStatus(Candidate)
 			rf.Vote()
 		}
 			
