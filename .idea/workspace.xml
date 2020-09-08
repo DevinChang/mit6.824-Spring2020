@@ -34,8 +34,8 @@
     <property name="configurable.Project.GOPATH.is.expanded" value="true" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
-    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/go-main-master" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/MIT-6.824-2018-master" />
+    <property name="settings.editor.selected.configurable" value="terminal" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
@@ -46,13 +46,17 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="561" y="71" key="#GOPATH/0.0.1536.824@0.0.1536.824" timestamp="1598624050187" />
-    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1599065379965">
+    <state x="106" y="43" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1599489809253">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1599065379965" />
-    <state x="279" y="113" key="SettingsEditor" timestamp="1598710069977">
+    <state x="106" y="43" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1599489809253" />
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1599526928083">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="279" y="113" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1598710069977" />
+    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1599526928083" />
+    <state x="169" y="76" key="SettingsEditor" timestamp="1599525000403">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="169" y="76" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1599525000403" />
   </component>
 </project>

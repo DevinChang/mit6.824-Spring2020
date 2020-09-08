@@ -43,6 +43,10 @@ const (
 	Leader    = 1
 	Candidate = 2
 	Follower  = 3
+	// 心跳周期
+	HeartBeatDuration = time.Duration(time.Millisecond * 600)
+	// 选举周期
+	ElectionDuration = HeartBeatDuration * 2
 )
 
 // read
@@ -79,7 +83,7 @@ type Raft struct {
 	state int // server state
 	randTime   *rand.Rand
 	// election timeout
-	electionTimer time.Timer
+	electionTimer *time.Timer
 }
 
 // return currentTerm and whether this server
@@ -347,6 +351,10 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.me = me
 
 	// Your initialization code here (2A, 2B, 2C).
+	rf.currentTerm = 0
+	rf.electionTimer = time.NewTimer(ElectionDuration)
+	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
+	rf.Election()
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
