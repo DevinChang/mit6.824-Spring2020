@@ -192,11 +192,15 @@ func (rf *Raft) Vote() {
 	for i := 0; i < srvlen; i++ {
 		go func(idx int) {
 			defer wait.Done()
+			if idx == rf.me {
+				agreeVoted++
+				return
+			}
 			reply := RequestVoteReply{
 				term: -1,
 				voteGranted: false,
 			}
-			if !rf.sendRequestVote(i, &arg, &reply) {
+			if !rf.sendRequestVote(idx, &arg, &reply) {
 				DPrintf("sendRequestVote error")
 			}
 			if reply.voteGranted {
@@ -250,13 +254,17 @@ func (rf *Raft) Election() {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	if args.term < rf.currentTerm {
-		reply.term = rf.currentTerm
+	reply.voteGranted = true
+	reply.term, _ = rf.GetState()
+	if args.term < reply.term {
 		reply.voteGranted = false
+		return
 	}
-	if rf.votedFor == -1 || rf.votedFor == args.candidateID {
-		// vote
-	}
+	// rpc request or response term > current term,set currentTerm = T, convert to follower
+	rf.setStatus(Follower)
+	rf.mu.Lock()
+	rf.currentTerm = reply.term
+	rf.mu.Unlock()
 }
 
 //
@@ -349,9 +357,9 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.peers = peers
 	rf.persister = persister
 	rf.me = me
-
 	// Your initialization code here (2A, 2B, 2C).
 	rf.currentTerm = 0
+	rf.state = Follower
 	rf.electionTimer = time.NewTimer(ElectionDuration)
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
 	rf.Election()
