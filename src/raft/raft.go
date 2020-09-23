@@ -202,6 +202,7 @@ func (rf *Raft) Vote() {
 			}
 			if !rf.sendRequestVote(idx, &arg, &reply) {
 				DPrintf("sendRequestVote error")
+				return
 			}
 			if reply.voteGranted {
 				agreeVoted++
@@ -297,7 +298,16 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 // the struct itself.
 //
 func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
-	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
+	repChan := make(chan(bool))
+	ok := false
+    go func () {
+		rep := rf.peers[server].Call("Raft.RequestVote", args, reply)
+		repChan <- rep
+	}()
+	select {
+	case ok = <- repChan:
+	case <-time.After(HeartBeatDuration):
+	}
 	return ok
 }
 
