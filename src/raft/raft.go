@@ -1,3 +1,4 @@
+
 package raft
 
 //
@@ -89,6 +90,8 @@ type Raft struct {
 // return currentTerm and whether this server
 // believes it is the leader.
 func (rf *Raft) GetState() (int, bool) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	//var term int
 	var isleader bool
 	// Your code here (2A).
@@ -142,10 +145,10 @@ func (rf *Raft) readPersist(data []byte) {
 //
 type RequestVoteArgs struct {
 	// Your data here (2A, 2B).
-	term         int
-	candidateID  int
-	lastLogIndex int
-	lastLongTerm int
+	Term         int
+	CandidateID  int
+	LastLogIndex int
+	LastLongTerm int
 }
 
 //
@@ -154,8 +157,8 @@ type RequestVoteArgs struct {
 //
 type RequestVoteReply struct {
 	// Your data here (2A).
-	term        int
-	voteGranted bool
+	Term        int
+	VoteGranted bool
 }
 
 func (rf *Raft) ResetTimeout() {
@@ -170,6 +173,15 @@ func (rf *Raft) getStatus() (int){
 	return rf.state
 }
 
+func (rf *Raft) setStatus(state int) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	if rf.state != Candidate && state == Candidate {
+		rf.ResetTimeout()
+	}
+	rf.state = state
+}
+
 func (rf *Raft) Vote() {
 	rf.mu.Lock()
 	rf.currentTerm++
@@ -177,8 +189,8 @@ func (rf *Raft) Vote() {
 	// vote for self?
 	currentTerm, _ := rf.GetState()
 	arg := RequestVoteArgs{
-		term : currentTerm,
-		candidateID: rf.me,
+		Term : currentTerm,
+		CandidateID: rf.me,
 	}
 	// send RequestVote RPCs to all servers
 	var (
@@ -197,19 +209,19 @@ func (rf *Raft) Vote() {
 				return
 			}
 			reply := RequestVoteReply{
-				term: -1,
-				voteGranted: false,
+				Term: -1,
+				VoteGranted: false,
 			}
 			if !rf.sendRequestVote(idx, &arg, &reply) {
 				DPrintf("sendRequestVote error")
 				return
 			}
-			if reply.voteGranted {
+			if reply.VoteGranted {
 				agreeVoted++
 				return
 			}
-			if term < reply.term {
-				term = reply.term
+			if term < reply.Term {
+				term = reply.Term
 			}
 		}(i)
 		wait.Wait()
@@ -226,11 +238,7 @@ func (rf *Raft) Vote() {
 	}
 }
 
-func (rf *Raft) setStatus(state int) {
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
-	rf.state = state
-}
+
 
 func (rf *Raft) Election() {
 	rf.ResetTimeout()
@@ -246,8 +254,15 @@ func (rf *Raft) Election() {
 			rf.setStatus(Candidate)
 			rf.Vote()
 		}
-			
+
 	}
+}
+
+
+func (rf *Raft) setTerm(term int){
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	rf.currentTerm = term
 }
 
 //
@@ -255,17 +270,20 @@ func (rf *Raft) Election() {
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
-	reply.voteGranted = true
-	reply.term, _ = rf.GetState()
-	if args.term < reply.term {
-		reply.voteGranted = false
+	reply.VoteGranted = true
+	reply.Term, _ = rf.GetState()
+	if args.Term < reply.Term {
+		reply.VoteGranted = false
 		return
 	}
 	// rpc request or response term > current term,set currentTerm = T, convert to follower
 	rf.setStatus(Follower)
 	rf.mu.Lock()
-	rf.currentTerm = reply.term
+	rf.currentTerm = args.Term
 	rf.mu.Unlock()
+	if reply.VoteGranted {
+		rf.ResetTimeout()
+	}
 }
 
 //
@@ -300,7 +318,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
 	repChan := make(chan(bool))
 	ok := false
-    go func () {
+	go func () {
 		rep := rf.peers[server].Call("Raft.RequestVote", args, reply)
 		repChan <- rep
 	}()
@@ -372,7 +390,8 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.state = Follower
 	rf.electionTimer = time.NewTimer(ElectionDuration)
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
-	rf.Election()
+
+	go rf.Election()
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
