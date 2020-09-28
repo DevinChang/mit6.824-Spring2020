@@ -92,13 +92,9 @@ type Raft struct {
 func (rf *Raft) GetState() (int, bool) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	//var term int
-	var isleader bool
-	// Your code here (2A).
-	if rf.state == Leader {
-		isleader = true
-	}
+	isleader := rf.state == Leader
 	return rf.currentTerm, isleader
+
 }
 
 //
@@ -163,7 +159,7 @@ type RequestVoteReply struct {
 
 func (rf *Raft) ResetTimeout() {
 	randtime := rf.randTime.Intn(250) // interval
-	duration := time.Duration(randtime) * time.Millisecond
+	duration := time.Duration(randtime) * time.Millisecond + ElectionDuration
 	rf.electionTimer.Reset(duration)
 }
 
@@ -188,6 +184,7 @@ func (rf *Raft) Vote() {
 	rf.mu.Unlock()
 	// vote for self?
 	currentTerm, _ := rf.GetState()
+	DPrintf("currentTerm = %+v", currentTerm)
 	arg := RequestVoteArgs{
 		Term : currentTerm,
 		CandidateID: rf.me,
@@ -224,17 +221,16 @@ func (rf *Raft) Vote() {
 				term = reply.Term
 			}
 		}(i)
-		wait.Wait()
-		// judge status
-		if term > currentTerm {
-			rf.mu.Lock()
-			rf.currentTerm = term
-			rf.mu.Unlock()
-			rf.setStatus(Follower)
-		}
-		if agreeVoted * 2 > srvlen {
-			rf.setStatus(Leader)
-		}
+	}
+	wait.Wait()
+	// judge status
+	if term > currentTerm {
+		rf.mu.Lock()
+		rf.currentTerm = term
+		rf.mu.Unlock()
+		rf.setStatus(Follower)
+	}else if agreeVoted * 2 > srvlen {
+		rf.setStatus(Leader)
 	}
 }
 
@@ -272,6 +268,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	reply.VoteGranted = true
 	reply.Term, _ = rf.GetState()
+	DPrintf("args.Term(%+v)  reply.Term(%+v)", args.Term, reply.Term)
 	if args.Term < reply.Term {
 		reply.VoteGranted = false
 		return
