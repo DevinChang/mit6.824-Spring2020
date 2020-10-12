@@ -85,6 +85,8 @@ type Raft struct {
 	randTime   *rand.Rand
 	// election timeout
 	electionTimer *time.Timer
+	// lab 2b
+
 }
 
 // return currentTerm and whether this server
