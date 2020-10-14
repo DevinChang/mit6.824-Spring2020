@@ -58,6 +58,16 @@ type ApplyMsg struct {
 	CommandIndex int
 }
 
+
+// lab 2B
+// log entry
+type LogEntry struct {
+	Commond interface{}
+	Index int
+	Term int
+}
+
+
 //
 // A Go object implementing a single Raft peer.
 //
@@ -328,6 +338,11 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 	return ok
 }
 
+func (rf *Raft) AddCommandToLog(command interface{})(error) {
+
+	return nil
+}
+
 //
 // the service using Raft (e.g. a k/v server) wants to start
 // agreement on the next command to be appended to Raft's log. if this
@@ -342,14 +357,15 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 // term. the third return value is true if this server believes it is
 // the leader.
 //
-func (rf *Raft) Start(command interface{}) (int, int, bool) {
-	index := -1
-	term := -1
-	isLeader := true
-
+func (rf *Raft) Start(command interface{}) (index int,  curren_term int, is_leader bool) {
+	// get current term and judge state
+	curren_term, is_leader = rf.GetState()
 	// Your code here (2B).
+	// Leader appends the command to its log
+	if is_leader {
 
-	return index, term, isLeader
+	}
+	return
 }
 
 //
@@ -391,6 +407,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
 
 	go rf.Election()
+
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
