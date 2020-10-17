@@ -363,7 +363,8 @@ func (rf *Raft) Start(command interface{}) (index int,  curren_term int, is_lead
 	// Your code here (2B).
 	// Leader appends the command to its log
 	if is_leader {
-
+		rf.AddCommandToLog(command)
+		// issues AppendEntries RPCs to other servers
 	}
 	return
 }
@@ -411,6 +412,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
+
 
 	return rf
 }
