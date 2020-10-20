@@ -67,6 +67,18 @@ type LogEntry struct {
 	Term int
 }
 
+type AppendEntry struct {
+	Term int
+	LeaderId int
+	PrevLogTerm int
+	Entries []LogEntry
+	LeaderCommit int
+}
+
+type AppendEntryResp struct {
+	CurrentTerm int
+	Success bool
+}
 
 //
 // A Go object implementing a single Raft peer.
@@ -83,7 +95,7 @@ type Raft struct {
 	// persistent state on Server
 	currentTerm int
 	votedFor    int
-	log         []int // entry?
+	log         []LogEntry // entry?
 	// volatile state on Server
 	commitIndex int
 	lastApplied int
@@ -339,7 +351,16 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 }
 
 func (rf *Raft) AddCommandToLog(command interface{})(error) {
-
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	entry := LogEntry{
+		Term : rf.currentTerm,
+		Commond: command,
+	}
+	// index
+	entry.Index = rf.log[len(rf.log)-1].Index+1
+	// append entry
+	rf.log = append(rf.log, entry)
 	return nil
 }
 
