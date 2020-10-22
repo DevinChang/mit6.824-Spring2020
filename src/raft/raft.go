@@ -67,7 +67,7 @@ type LogEntry struct {
 	Term int
 }
 
-type AppendEntry struct {
+type AppendEntryArgs struct {
 	Term int
 	LeaderId int
 	PrevLogTerm int
@@ -350,7 +350,25 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 	return ok
 }
 
-func (rf *Raft) AddCommandToLog(command interface{})(error) {
+func (rf *Raft) AppendEntry(args *AppendEntryArgs, resp *AppendEntryResp) {
+	return
+}
+
+func (rf *Raft) sendAppendEntry(server int, args *AppendEntryArgs, resp *AppendEntryResp) bool {
+	repChan := make(chan(bool))
+	ok := false
+	go func() {
+		rep := rf.peers[server].Call("Raft.AppendEntry", args, resp)
+		repChan <- rep
+	}()
+	select {
+	case ok = <- repChan:
+	case <-time.After(HeartBeatDuration):
+	}
+	return ok
+}
+
+func (rf *Raft) AddCommandToLog(command interface{})(indx int) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 	entry := LogEntry{
@@ -361,7 +379,8 @@ func (rf *Raft) AddCommandToLog(command interface{})(error) {
 	entry.Index = rf.log[len(rf.log)-1].Index+1
 	// append entry
 	rf.log = append(rf.log, entry)
-	return nil
+	indx = entry.Index
+	return
 }
 
 //
@@ -378,14 +397,17 @@ func (rf *Raft) AddCommandToLog(command interface{})(error) {
 // term. the third return value is true if this server believes it is
 // the leader.
 //
-func (rf *Raft) Start(command interface{}) (index int,  curren_term int, is_leader bool) {
+func (rf *Raft) Start(command interface{}) (index int,  current_term int, is_leader bool) {
 	// get current term and judge state
-	curren_term, is_leader = rf.GetState()
+	current_term, is_leader = rf.GetState()
 	// Your code here (2B).
 	// Leader appends the command to its log
 	if is_leader {
-		rf.AddCommandToLog(command)
+		index = rf.AddCommandToLog(command)
 		// issues AppendEntries RPCs to other servers
+		for i := 0; i < len(rf.peers); i++ {
+
+		}
 	}
 	return
 }
@@ -399,6 +421,11 @@ func (rf *Raft) Start(command interface{}) (index int,  curren_term int, is_lead
 func (rf *Raft) Kill() {
 	// Your code here, if desired.
 }
+
+
+// ensure the entry has been safely replicated
+
+// apply the entry
 
 
 
@@ -429,7 +456,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
 
 	go rf.Election()
-
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
