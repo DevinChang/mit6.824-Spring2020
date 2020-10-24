@@ -351,6 +351,7 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 }
 
 func (rf *Raft) AppendEntry(args *AppendEntryArgs, resp *AppendEntryResp) {
+
 	return
 }
 
@@ -427,7 +428,9 @@ func (rf *Raft) Kill() {
 
 // apply the entry
 
+func (rf *Raft) Apply() {
 
+}
 
 
 
