@@ -278,6 +278,11 @@ func (rf *Raft) Election() {
 	}
 }
 
+// replicated log
+func (rf *Raft) ReplicatedLogLoop() {
+	return
+}
+
 
 func (rf *Raft) setTerm(term int){
 	rf.mu.Lock()
