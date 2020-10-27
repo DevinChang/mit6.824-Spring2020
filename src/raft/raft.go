@@ -108,7 +108,7 @@ type Raft struct {
 	// election timeout
 	electionTimer *time.Timer
 	// lab 2b
-
+	replicateLogTimer []*time.Timer
 }
 
 // return currentTerm and whether this server
@@ -279,7 +279,11 @@ func (rf *Raft) Election() {
 }
 
 // replicated log
-func (rf *Raft) ReplicatedLogLoop() {
+func (rf *Raft) ReplicatedLogLoop(peer int) {
+	for true {
+		// 当heartbeat到期后进行后续操作
+
+	}
 	return
 }
 
@@ -409,11 +413,8 @@ func (rf *Raft) Start(command interface{}) (index int,  current_term int, is_lea
 	// Your code here (2B).
 	// Leader appends the command to its log
 	if is_leader {
-		index = rf.AddCommandToLog(command)
-		// issues AppendEntries RPCs to other servers
-		for i := 0; i < len(rf.peers); i++ {
-
-		}
+		index = rf.AddCommandToLog(command) // 更新leader的log,之后
+		// leader更新定时器
 	}
 	return
 }
@@ -462,8 +463,14 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.state = Follower
 	rf.electionTimer = time.NewTimer(ElectionDuration)
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
+	rf.replicateLogTimer = make([]*time.Timer, len(rf.peers)) // heartbeat Timer
 
 	go rf.Election()
+
+	// 当leader接收到command之后，就发送AppendEntry到每个server
+	for i := 0; i < len(rf.peers); i++ {
+		go rf.ReplicatedLogLoop(i)
+	}
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
