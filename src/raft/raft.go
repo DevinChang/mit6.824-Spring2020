@@ -282,6 +282,10 @@ func (rf *Raft) Election() {
 func (rf *Raft) ReplicatedLogLoop(peer int) {
 	for true {
 		// 当heartbeat到期后进行后续操作
+		<-rf.replicateLogTimer[peer].C
+		if rf.state == Leader{
+
+		}
 
 	}
 	return
