@@ -283,8 +283,17 @@ func (rf *Raft) ReplicatedLogLoop(peer int) {
 	for true {
 		// 当heartbeat到期后进行后续操作
 		<-rf.replicateLogTimer[peer].C
-		if rf.state == Leader{
-
+		if rf.state == Leader{ // if this server is leader, then send AE to followers
+			aeReq := &AppendEntryArgs{
+				Term: rf.currentTerm,
+				LeaderId: rf.me,
+				PrevLogTerm: rf.lastApplied,
+			}
+			aeResp := &AppendEntryResp{}
+			ok := rf.sendAppendEntry(peer, aeReq, aeResp)
+			if !ok {
+				return
+			}
 		}
 
 	}
