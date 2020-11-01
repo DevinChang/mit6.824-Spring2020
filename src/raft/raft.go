@@ -433,6 +433,11 @@ func (rf *Raft) Start(command interface{}) (index int,  current_term int, is_lea
 	if is_leader {
 		index = rf.AddCommandToLog(command) // 更新leader的log,之后
 		// leader更新定时器
+		rf.mu.Lock()
+		for i := 0; i < len(rf.peers); i++ {
+			rf.replicateLogTimer[i].Reset(0)
+		}
+		rf.mu.Unlock()
 	}
 	return
 }
@@ -487,6 +492,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 
 	// 当leader接收到command之后，就发送AppendEntry到每个server
 	for i := 0; i < len(rf.peers); i++ {
+		rf.replicateLogTimer[i] =time.NewTimer(HeartBeatDuration)
 		go rf.ReplicatedLogLoop(i)
 	}
 
