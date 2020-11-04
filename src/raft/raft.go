@@ -278,6 +278,10 @@ func (rf *Raft) Election() {
 	}
 }
 
+func (rf *Raft) sendLogTo(peer int) (ok bool){
+	return
+}
+
 // replicated log
 func (rf *Raft) ReplicatedLogLoop(peer int) {
 	for true {
@@ -286,14 +290,9 @@ func (rf *Raft) ReplicatedLogLoop(peer int) {
 		rf.mu.Lock()
 		rf.replicateLogTimer[peer].Reset(HeartBeatDuration)
 		rf.mu.Unlock()
-		if rf.state == Leader{ // if this server is leader, then send AE to followers
-			aeReq := &AppendEntryArgs{
-				Term: rf.currentTerm,
-				LeaderId: rf.me,
-				PrevLogTerm: rf.lastApplied,
-			}
-			aeResp := &AppendEntryResp{}
-			ok := rf.sendAppendEntry(peer, aeReq, aeResp)
+		_, isLeader := rf.GetState()
+		if isLeader { // if this server is leader, then send AE to followers
+			ok := rf.sendLogTo(peer) // leader send log to all followers
 			if !ok {
 				// 如果已经送到客户端，则执行apply状态机
 				rf.Apply()
