@@ -279,6 +279,7 @@ func (rf *Raft) Election() {
 }
 
 func (rf *Raft) sendLogTo(peer int) (ok bool){
+	
 	return
 }
 
