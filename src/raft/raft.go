@@ -279,7 +279,11 @@ func (rf *Raft) Election() {
 }
 
 func (rf *Raft) sendLogTo(peer int) (ok bool){
-	
+	isLoop := true
+	for isLoop {
+		isLoop = false
+
+	}
 	return
 }
 
