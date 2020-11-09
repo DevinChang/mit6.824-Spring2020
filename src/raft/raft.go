@@ -301,7 +301,8 @@ func (rf *Raft) sendLogTo(peer int) (ret bool){
 			LeaderCommit: 0,
 		}
 		reply := AppendEntryResp{}
-		if ok := rf.sendAppendEntry(peer, &req, &reply); !ok {
+		var ok bool
+		if ok = rf.sendAppendEntry(peer, &req, &reply); !ok {
 			return
 		}
 		// 同步commitIndex to followers
