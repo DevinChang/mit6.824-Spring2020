@@ -278,11 +278,46 @@ func (rf *Raft) Election() {
 	}
 }
 
-func (rf *Raft) sendLogTo(peer int) (ok bool){
-	isLoop := true
-	for isLoop {
-		isLoop = false
+func (rf *Raft) setNext(peer, next int) {
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	rf.nextIndex[peer] = next
+}
 
+func (rf *Raft) sendLogTo(peer int) (ret bool){
+	ret = false
+	retry := true
+	for retry {
+		retry = false
+		curTerm, isLeader := rf.GetState()
+		if !isLeader {
+			break
+		}
+		req := AppendEntryArgs{
+			Term:         curTerm,
+			LeaderId:     peer,
+			PrevLogTerm:  0,
+			Entries:      nil,
+			LeaderCommit: 0,
+		}
+		reply := AppendEntryResp{}
+		if ok := rf.sendAppendEntry(peer, &req, &reply); !ok {
+			return
+		}
+		// 同步commitIndex to followers
+		if ok && isLeader {
+			// 某个节点的term打羽当前leader的term，则改变leader
+			if reply.CurrentTerm > curTerm {
+				rf.setTerm(reply.CurrentTerm)
+				rf.setStatus(Follower)
+			} else if reply.Success == false { // term < currentTerm or log doesn`t contain entry at prevLogIndex
+				retry = true
+				rf.setNext(peer, reply.CurrentTerm+1)
+			} else { // 更新成功
+				// TODO: 更新成功的操作
+				ret = true
+			}
+		}
 	}
 	return
 }
