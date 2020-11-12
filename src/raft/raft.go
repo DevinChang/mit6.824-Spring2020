@@ -444,7 +444,7 @@ func (rf *Raft) AddCommandToLog(command interface{})(indx int) {
 		Commond: command,
 	}
 	// index
-	entry.Index = rf.log[len(rf.log)-1].Index+1
+	entry.Index = rf.log[len(rf.log)].Index+1
 	// append entry
 	rf.log = append(rf.log, entry)
 	indx = entry.Index
