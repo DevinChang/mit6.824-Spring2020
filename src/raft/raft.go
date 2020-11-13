@@ -528,6 +528,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
 	rf.replicateLogTimer = make([]*time.Timer, len(rf.peers)) // heartbeat Timer
 
+	// need read paper again!!!!
 	go rf.Election()
 
 	// 当leader接收到command之后，就发送AppendEntry到每个server
