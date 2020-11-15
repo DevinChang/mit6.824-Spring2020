@@ -203,10 +203,11 @@ func (rf *Raft) setStatus(state int) {
 }
 
 func (rf *Raft) Vote() {
+	// increase tis current term
 	rf.mu.Lock()
 	rf.currentTerm++
 	rf.mu.Unlock()
-	// vote for self?
+	//
 	currentTerm, _ := rf.GetState()
 	DPrintf("currentTerm = %+v", currentTerm)
 	arg := RequestVoteArgs{
