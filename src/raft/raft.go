@@ -203,7 +203,7 @@ func (rf *Raft) setStatus(state int) {
 }
 
 func (rf *Raft) Vote() {
-	// increase tis current term
+	// become candidate, increase this current term, and vote
 	rf.mu.Lock()
 	rf.currentTerm++
 	rf.mu.Unlock()
@@ -282,7 +282,6 @@ func (rf *Raft) Election() {
 func (rf *Raft) setNext(peer, next int) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	rf.nextIndex[peer] = next
 }
 
 func (rf *Raft) sendLogTo(peer int) (ret bool){
@@ -529,7 +528,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.randTime = rand.New(rand.NewSource(time.Now().UnixNano() + int64(rf.me)))
 	rf.replicateLogTimer = make([]*time.Timer, len(rf.peers)) // heartbeat Timer
 
-	// need read paper again!!!!
 	go rf.Election()
 
 	// 当leader接收到command之后，就发送AppendEntry到每个server
