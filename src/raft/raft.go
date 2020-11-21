@@ -203,10 +203,11 @@ func (rf *Raft) setStatus(state int) {
 }
 
 func (rf *Raft) Vote() {
+	// become candidate, increase this current term, and vote
 	rf.mu.Lock()
 	rf.currentTerm++
 	rf.mu.Unlock()
-	// vote for self?
+	//
 	currentTerm, _ := rf.GetState()
 	DPrintf("currentTerm = %+v", currentTerm)
 	arg := RequestVoteArgs{
@@ -281,7 +282,6 @@ func (rf *Raft) Election() {
 func (rf *Raft) setNext(peer, next int) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	rf.nextIndex[peer] = next
 }
 
 func (rf *Raft) sendLogTo(peer int) (ret bool){
@@ -445,7 +445,7 @@ func (rf *Raft) AddCommandToLog(command interface{})(indx int) {
 		Commond: command,
 	}
 	// index
-	entry.Index = rf.log[len(rf.log)-1].Index+1
+	entry.Index = rf.log[len(rf.log)].Index+1
 	// append entry
 	rf.log = append(rf.log, entry)
 	indx = entry.Index
