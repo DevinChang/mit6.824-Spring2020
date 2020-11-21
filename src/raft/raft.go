@@ -317,6 +317,7 @@ func (rf *Raft) sendLogTo(peer int) (ret bool){
 			} else { // 更新成功
 				// TODO: 更新成功的操作
 				ret = true
+
 			}
 		}
 	}
